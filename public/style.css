@@ -91,4 +91,25 @@ li.completed {
 .timer {
     margin-top: 25px;
     text-align: center;
+.theme-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: transparent;
+    font-size: 18px;
+}
+
+.light-mode {
+    background: linear-gradient(-45deg, #f5f7fa, #c3cfe2);
+    color: #222;
+}
+
+.light-mode .container {
+    background: rgba(0,0,0,0.05);
+    color: #222;
+}
+
+.light-mode li {
+    background: rgba(0,0,0,0.08);
+}
 }

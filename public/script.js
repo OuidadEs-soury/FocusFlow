@@ -54,6 +54,31 @@ async function deleteTask(id) {
 }
 
 function startTimer() {
+    let timer;
+let timeLeft = 1500;
+
+function startTimer() {
+    if (timer) return;
+
+    timer = setInterval(() => {
+        timeLeft--;
+
+        const minutes = Math.floor(timeLeft / 60);
+        const seconds = timeLeft % 60;
+
+        document.getElementById("timerDisplay").textContent =
+            `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
+
+        if (timeLeft <= 0) {
+            clearInterval(timer);
+            timer = null;
+
+            document.getElementById("alarmSound").play();
+            document.querySelector(".container").style.boxShadow =
+                "0 0 40px #4e73df";
+        }
+    }, 1000);
+}
     if (timer) return;
 
     timer = setInterval(() => {
@@ -75,3 +100,15 @@ function resetTimer() {
 }
 
 loadTasks();
+// Theme Toggle
+const toggleBtn = document.getElementById("themeToggle");
+
+toggleBtn.addEventListener("click", () => {
+    document.body.classList.toggle("light-mode");
+
+    if (document.body.classList.contains("light-mode")) {
+        toggleBtn.textContent = "☀️";
+    } else {
+        toggleBtn.textContent = "🌙";
+    }
+});
