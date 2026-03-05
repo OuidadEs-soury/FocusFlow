@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <audio id="alarmSound" src="alarm.mp3"></audio>
     <title>FocusFlow</title>
     <link rel="stylesheet" href="style.css">
 </head>
@@ -9,7 +8,6 @@
 
 <div class="container">
     <h1>FocusFlow</h1>
-    <button id="themeToggle" class="theme-btn">🌙</button>
 
     <div class="input-section">
         <input type="text" id="taskInput" placeholder="What are you working on?">
@@ -17,6 +15,11 @@
     </div>
 
     <ul id="taskList"></ul>
+
+    <!-- ✅ PROGRESS BAR ADDED HERE -->
+    <div class="progress-container">
+        <div id="progressBar" class="progress-bar"></div>
+    </div>
 
     <div class="stats">
         <p id="statsText">0 tasks completed</p>

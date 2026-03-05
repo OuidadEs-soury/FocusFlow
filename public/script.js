@@ -1,114 +1,131 @@
-const API = "http://localhost:5000/tasks";
-let timer;
-let timeLeft = 1500;
+const express = require("express");
+const mongoose = require("mongoose");
+const cors = require("cors");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 
-async function loadTasks() {
-    const res = await fetch(API);
-    const tasks = await res.json();
-    const list = document.getElementById("taskList");
-    list.innerHTML = "";
+const app = express();
 
-    let completedCount = 0;
+app.use(cors());
+app.use(express.json());
+app.use(express.static("public"));
 
-    tasks.forEach(task => {
-        const li = document.createElement("li");
-        li.textContent = task.title;
+mongoose.connect("mongodb://127.0.0.1:27017/focusflow")
+    .then(() => console.log("MongoDB Connected"))
+    .catch(err => console.log(err));
 
-        if (task.completed) {
-            li.classList.add("completed");
-            completedCount++;
-        }
+const Task = require("./models/Task");
+const User = require("./models/User");
 
-        li.onclick = () => toggleTask(task._id);
-        li.ondblclick = () => deleteTask(task._id);
+const SECRET = "supersecretkey";
 
-        list.appendChild(li);
-    });
 
-    document.getElementById("statsText").textContent =
-        `${completedCount} tasks completed`;
-}
 
-async function addTask() {
-    const input = document.getElementById("taskInput");
-    if (!input.value) return;
 
-    await fetch(API, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: input.value })
-    });
+function authenticate(req, res, next) {
+    const token = req.headers.authorization;
 
-    input.value = "";
-    loadTasks();
-}
-
-async function toggleTask(id) {
-    await fetch(`${API}/${id}`, { method: "PUT" });
-    loadTasks();
-}
-
-async function deleteTask(id) {
-    await fetch(`${API}/${id}`, { method: "DELETE" });
-    loadTasks();
-}
-
-function startTimer() {
-    let timer;
-let timeLeft = 1500;
-
-function startTimer() {
-    if (timer) return;
-
-    timer = setInterval(() => {
-        timeLeft--;
-
-        const minutes = Math.floor(timeLeft / 60);
-        const seconds = timeLeft % 60;
-
-        document.getElementById("timerDisplay").textContent =
-            `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
-
-        if (timeLeft <= 0) {
-            clearInterval(timer);
-            timer = null;
-
-            document.getElementById("alarmSound").play();
-            document.querySelector(".container").style.boxShadow =
-                "0 0 40px #4e73df";
-        }
-    }, 1000);
-}
-    if (timer) return;
-
-    timer = setInterval(() => {
-        timeLeft--;
-        const minutes = Math.floor(timeLeft / 60);
-        const seconds = timeLeft % 60;
-        document.getElementById("timerDisplay").textContent =
-            `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
-
-        if (timeLeft <= 0) clearInterval(timer);
-    }, 1000);
-}
-
-function resetTimer() {
-    clearInterval(timer);
-    timer = null;
-    timeLeft = 1500;
-    document.getElementById("timerDisplay").textContent = "25:00";
-}
-
-loadTasks();
-// Theme Toggle
-const toggleBtn = document.getElementById("themeToggle");
-
-toggleBtn.addEventListener("click", () => {
-    document.body.classList.toggle("light-mode");
-
-    if (document.body.classList.contains("light-mode")) {
-        toggleBtn.textContent = "☀️";
-    } else {
-        toggleBtn.textContent = "🌙";
+    if (!token) {
+        return res.status(401).json({ message: "No token provided" });
     }
+
+    try {
+        const verified = jwt.verify(token, SECRET);
+        req.user = verified;
+        next();
+    } catch (err) {
+        res.status(400).json({ message: "Invalid token" });
+    }
+}
+
+
+
+
+app.post("/register", async (req, res) => {
+    try {
+        const hashedPassword = await bcrypt.hash(req.body.password, 10);
+
+        const user = new User({
+            username: req.body.username,
+            password: hashedPassword
+        });
+
+        await user.save();
+
+        res.json({ message: "User created successfully" });
+
+    } catch (err) {
+        res.status(400).json({ message: "Error creating user" });
+    }
+});
+
+
+
+
+app.post("/login", async (req, res) => {
+    try {
+        const user = await User.findOne({ username: req.body.username });
+
+        if (!user) {
+            return res.status(400).json({ message: "User not found" });
+        }
+
+        const validPassword = await bcrypt.compare(
+            req.body.password,
+            user.password
+        );
+
+        if (!validPassword) {
+            return res.status(400).json({ message: "Wrong password" });
+        }
+
+        const token = jwt.sign({ id: user._id }, SECRET);
+
+        res.json({ token });
+
+    } catch (err) {
+        res.status(400).json({ message: "Login failed" });
+    }
+});
+
+
+
+
+app.get("/tasks", authenticate, async (req, res) => {
+    const tasks = await Task.find({ userId: req.user.id });
+    res.json(tasks);
+});
+
+app.post("/tasks", authenticate, async (req, res) => {
+    const newTask = new Task({
+        title: req.body.title,
+        completed: false,
+        userId: req.user.id
+    });
+
+    await newTask.save();
+    res.json(newTask);
+});
+
+app.put("/tasks/:id", authenticate, async (req, res) => {
+    const task = await Task.findById(req.params.id);
+
+    if (!task) {
+        return res.status(404).json({ message: "Task not found" });
+    }
+
+    task.completed = !task.completed;
+    await task.save();
+
+    res.json(task);
+});
+
+app.delete("/tasks/:id", authenticate, async (req, res) => {
+    await Task.findByIdAndDelete(req.params.id);
+    res.json({ message: "Task deleted" });
+});
+
+
+app.listen(5000, () => {
+    console.log("Server running on port 5000");
 });

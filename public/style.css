@@ -112,4 +112,42 @@ li.completed {
 .light-mode li {
     background: rgba(0,0,0,0.08);
 }
+.theme-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: transparent;
+    font-size: 18px;
+}
+
+.light-mode {
+    background: linear-gradient(-45deg, #f5f7fa, #c3cfe2);
+    color: #222;
+}
+
+.light-mode .container {
+    background: rgba(0,0,0,0.05);
+    color: #222;
+}
+
+.light-mode li {
+    background: rgba(0,0,0,0.08);
+}
+/* === PROGRESS BAR === */
+
+.progress-container {
+    width: 100%;
+    height: 8px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 10px;
+    margin-top: 15px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(135deg, #4e73df, #6f42c1);
+    transition: width 0.4s ease;
+}
 }
